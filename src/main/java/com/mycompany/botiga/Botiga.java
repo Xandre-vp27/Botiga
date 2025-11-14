@@ -16,7 +16,7 @@ public class Botiga {
 
     public static void main(String[] args) {
         try (Connection conn = Connexio.getConnection()) {
-            System.out.println("Conexión correcta a la base de datos Botiga!");
+            System.out.println("✔Connexió correcta a la base de dades Botiga!");
         } catch (SQLException e) {
             e.printStackTrace();
         }
