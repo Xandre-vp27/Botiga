@@ -84,12 +84,65 @@ public class ComandaDAO {
                             System.err.println("AVÍS: No s'han pogut aplicar els descomptes. Es continua sense ells. Causa: " + e.getMessage());
                         }
 
+                        // 4. CALCULAR EL TOTAL FINAL (AMB ELS POSSIBLES DESCOMPTES APLICATS)
+                        String sqlTotal = "SELECT SUM(quantitat * preuUnitari) AS total_calculat FROM LiniesComanda WHERE comanda_id = ?";
+                        double totalComanda = 0.0;
+
+                        try (PreparedStatement psTotal = conn.prepareStatement(sqlTotal)) {
+                            psTotal.setInt(1, comanda.getId());
+
+                            try (ResultSet rsTotal = psTotal.executeQuery()) {
+                                if (rsTotal.next()) {
+                                    totalComanda = rs.getDouble("total_calculat");
+                                }
+                            }
+                        }
+
+                        // 5. ACTUALITZAR EL CAMP 'TOTAL' DE LA COMANDA
+                        String sqlUpdateTotal = "UPDATE Comandes SET total = ? WHERE id = ?";
+                        try (PreparedStatement psUpdateTotal = conn.prepareStatement(sqlUpdateTotal)) {
+                            psUpdateTotal.setDouble(1, totalComanda);
+                            psUpdateTotal.setInt(2, comanda.getId());
+                            psUpdateTotal.executeUpdate();
+                        }
+                        // El 'conn.commit()' y la gestión de la conexión ya están en el 'finally' principal del método.
+
                     } else {
                         throw new SQLException("Error en crear la comanda, no s'ha obtingut l'ID.");
                     }
                 }
             }
 
+            // -------------------------------------------------------------------------
+            // PAS 6: CALCULAR EL TOTAL FINAL I ACTUALITZAR LA COMANDA
+            // -------------------------------------------------------------------------
+            // 6.1. Calculem la suma real de les línies (tenint en compte possibles descomptes)
+            String sqlTotal = "SELECT SUM(quantitat * preuUnitari) FROM LiniesComanda WHERE comanda_id = ?";
+            double totalComanda = 0.0;
+
+            try (PreparedStatement psTotal = conn.prepareStatement(sqlTotal)) {
+                psTotal.setInt(1, comanda.getId());
+
+                try (ResultSet rs = psTotal.executeQuery()) {
+                    if (rs.next()) {
+                        // FIX: Usem l'índex 1 en lloc de l'alias per evitar l'error "Column not found"
+                        totalComanda = rs.getDouble(1);
+                    }
+                }
+            }
+
+            // 6.2. Actualitzem el camp 'total' a la taula Comandes
+            String sqlUpdateTotal = "UPDATE Comandes SET total = ? WHERE id = ?";
+            try (PreparedStatement psUpdateTotal = conn.prepareStatement(sqlUpdateTotal)) {
+                psUpdateTotal.setDouble(1, totalComanda);
+                psUpdateTotal.setInt(2, comanda.getId());
+
+                psUpdateTotal.executeUpdate();
+            }
+
+            // -------------------------------------------------------------------------
+            // FI DEL PAS 6
+            // -------------------------------------------------------------------------
             conn.commit();
         } catch (SQLException e) {
             if (conn != null) {
