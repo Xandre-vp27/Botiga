@@ -7,6 +7,7 @@ package com.mycompany.botiga.DAO;
 import com.mycompany.botiga.util.Connexio;
 import com.mycompany.botiga.model.Comanda;
 import com.mycompany.botiga.model.LiniaComanda;
+import com.mycompany.botiga.model.TipusDescompte;
 
 import java.sql.*;
 import java.util.List;
@@ -123,6 +124,7 @@ public class ComandaDAO {
     }
 
     private void aplicarDescomptes(Connection conn, int comandaId) throws SQLException {
+        // La consulta SQL se mantiene igual
         String sqlDescomptes = "SELECT d.tipus, d.valor, lc.producte_id, lc.id AS linia_id, lc.preuUnitari "
                 + "FROM LiniesComanda lc "
                 + "JOIN Descomptes d ON lc.producte_id = d.producte_id "
@@ -134,18 +136,24 @@ public class ComandaDAO {
             try (ResultSet rs = psDescomptes.executeQuery()) {
                 while (rs.next()) {
                     int liniaId = rs.getInt("linia_id");
-                    String tipus = rs.getString("tipus");
                     double valorDescompte = rs.getDouble("valor");
                     double preuActual = rs.getDouble("preuUnitari");
                     double nouPreu = preuActual;
 
-                    if (tipus.equals("%")) {
-                        nouPreu = preuActual * (1 - (valorDescompte / 100.0));
-                    } else if (tipus.equals("€")) {
-                        nouPreu = preuActual - valorDescompte;
-                        if (nouPreu < 0) {
-                            nouPreu = 0;
-                        }
+                    // 1. Pasamos el string de BD a Enum 
+                    String tipusString = rs.getString("tipus");
+                    TipusDescompte tipus = TipusDescompte.fromDbValue(tipusString);    
+
+                    switch (tipus) {
+                        case PERCENT:
+                            nouPreu = preuActual * (1 - (valorDescompte / 100.0));
+                            break;
+                        case EURO:
+                            nouPreu = preuActual - valorDescompte;
+                            if (nouPreu < 0) {
+                                nouPreu = 0;
+                            }
+                            break;
                     }
 
                     String sqlUpdateLinia = "UPDATE LiniesComanda SET preuUnitari = ? WHERE id = ?";

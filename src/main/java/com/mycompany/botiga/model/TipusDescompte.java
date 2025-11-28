@@ -9,6 +9,26 @@ package com.mycompany.botiga.model;
  * @author alumnet
  */
 public enum TipusDescompte {
-    PERCENT,   
-    EURO       
+    PERCENT("%"), 
+    EURO("€");   
+    
+    private final String dbValue;
+
+    TipusDescompte(String dbValue) {
+        this.dbValue = dbValue;
+    }
+
+    public String getDbValue() {
+        return dbValue;
+    }
+    
+    // Método estático para obtener el Enum desde el String de la BD
+    public static TipusDescompte fromDbValue(String value) {
+        for (TipusDescompte t : TipusDescompte.values()) {
+            if (t.dbValue.equalsIgnoreCase(value)) {
+                return t;
+            }
+        }
+        throw new IllegalArgumentException("Tipo de Descuento desconocido: " + value);
+    }
 }

@@ -69,26 +69,25 @@ public class ProducteDAO {
             ps.executeUpdate();
         }
     }
-    
-    public Producte getById(int id) throws SQLException {
-    String sql = "SELECT * FROM Productes WHERE id = ?";
-    Producte p = null;
 
-    try (Connection conn = Connexio.getConnection();
-         PreparedStatement ps = conn.prepareStatement(sql)) {
-        
-        ps.setInt(1, id);
-        
-        try (ResultSet rs = ps.executeQuery()) {
-            if (rs.next()) {
-                p = new Producte();
-                p.setId(rs.getInt("id"));
-                p.setNom(rs.getString("nom"));
-                p.setPreu(rs.getDouble("preu"));
-                p.setEstoc(rs.getInt("estoc"));
+    public Producte getById(int id) throws SQLException {
+        String sql = "SELECT * FROM Productes WHERE id = ?";
+        Producte p = null;
+
+        try (Connection conn = Connexio.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, id);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    p = new Producte();
+                    p.setId(rs.getInt("id"));
+                    p.setNom(rs.getString("nom"));
+                    p.setPreu(rs.getDouble("preu"));
+                    p.setEstoc(rs.getInt("estoc"));
+                }
             }
         }
+        return p;
     }
-    return p;
-}
 }

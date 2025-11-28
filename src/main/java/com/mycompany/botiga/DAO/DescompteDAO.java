@@ -21,14 +21,9 @@ public class DescompteDAO {
         String sql = "INSERT INTO Descomptes (producte_id, tipus, valor) VALUES (?, ?, ?)";
 
         try (Connection conn = Connexio.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, d.getProducte_id());
-            
-            //Hem de comprovar quin TipusDescompte es per ficar % o €
-            if (d.getTipus() == TipusDescompte.PERCENT) {
-                ps.setString(2, "%");
-            } else {
-                ps.setString(2, "€");
-            }
+            ps.setInt(1, d.getProducte_id());           
+            //Comprobar el TipusDescompte 
+            ps.setString(2, d.getTipus().getDbValue());
             ps.setDouble(3, d.getValor());
 
             ps.executeUpdate();
@@ -46,15 +41,8 @@ public class DescompteDAO {
                 d.setId(rs.getInt("id"));
                 d.setProducte_id(rs.getInt("producte_id"));
                 
-                //Mirem primer que tipus de descompte es per poder fer el .setTipus()
-                String t = rs.getString("tipus");  // '%' o '€'
-                TipusDescompte tipus;
-                if (t.equals("%")) {
-                    tipus = TipusDescompte.PERCENT;
-                } else {
-                    tipus = TipusDescompte.EURO;
-                }
-                d.setTipus(tipus);
+                //Se hace el setTipus comprobadno que TipusDescompte es
+                d.setTipus(TipusDescompte.fromDbValue(rs.getString("tipus")));
                 d.setValor(rs.getDouble("valor")); 
                 
                 llista.add(d);
